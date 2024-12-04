@@ -1,148 +1,81 @@
-# Correction de G. Poux-Médard, 2021-2022
-
-# =============== PARTIE 1 =============
-# =============== 1.1 : REDDIT ===============
-# Library
+import os
+import pandas as pd
 import praw
-
-# Fonction affichage hiérarchie dict
-def showDictStruct(d):
-    def recursivePrint(d, i):
-        for k in d:
-            if isinstance(d[k], dict):
-                print("-"*i, k)
-                recursivePrint(d[k], i+2)
-            else:
-                print("-"*i, k, ":", d[k])
-    recursivePrint(d, 1)
-
-# Identification
-reddit = praw.Reddit(client_id="tjkhLTDJwZwOk8GmaH6VZw", client_secret='r1hid2DebE7DH9ymkbsjL5hrVXSBjw', user_agent='dataarticles')
-
-# Requête
-limit = 200
-hot_posts = reddit.subreddit('travel').hot(limit=limit)#.top("all", limit=limit)#
-
-# Récupération du texte
-docs = []
-docs_bruts = []
-afficher_cles = False
-for i, post in enumerate(hot_posts):
-    if i%10==0: print("Reddit:", i, "/", limit)
-    if afficher_cles:  # Pour connaître les différentes variables et leur contenu
-        for k, v in post.__dict__.items():
-            pass
-            print(k, ":", v)
-
-    if post.selftext != "":  # Osef des posts sans texte
-        pass
-        #print(post.selftext)
-    docs.append(post.selftext.replace("\n", " "))
-    docs_bruts.append(("Reddit", post))
-
-#print(docs)
-
-# =============== 1.3 : Exploitation ===============
-print(f"# docs avec doublons : {len(docs)}")
-docs = list(set(docs))
-print(f"# docs sans doublons : {len(docs)}")
-
-for i, doc in enumerate(docs):
-    print(f"Document {i}\t# caractères : {len(doc)}\t# mots : {len(doc.split(' '))}\t# phrases : {len(doc.split('.'))}")
-    if len(doc)<100:
-        docs.remove(doc)
-
-longueChaineDeCaracteres = " ".join(docs)
-
-# =============== PARTIE 2 =============
-# =============== 2.1, 2.2 : CLASSE DOCUMENT ===============
-from Classes import Document
-
-# =============== 2.3 : MANIPS ===============
+import urllib.request
+import xmltodict
 import datetime
-collection = []
-for nature, doc in docs_bruts:
-    if nature == "ArXiv":  # Les fichiers de ArXiv ou de Reddit sont pas formatés de la même manière à ce stade.
-        #showDictStruct(doc)
+from Classes import RedditDocument, ArxivDocument
 
-        titre = doc["title"].replace('\n', '')  # On enlève les retours à la ligne
+# Fonction pour collecter les données d'ArXiv
+def collect_arxiv_data(query, limit=10):
+    base_url = f'http://export.arxiv.org/api/query?search_query=all:{query}&start=0&max_results={limit}'
+    response = urllib.request.urlopen(base_url).read()
+    data = xmltodict.parse(response)
+    docs = []
+    for entry in data['feed']['entry']:
+        titre = entry['title'].replace('\n', '')
         try:
-            authors = ", ".join([a["name"] for a in doc["author"]])  # On fait une liste d'auteurs, séparés par une virgule
-        except:
-            authors = doc["author"]["name"]  # Si l'auteur est seul, pas besoin de liste
-        summary = doc["summary"].replace("\n", "")  # On enlève les retours à la ligne
-        date = datetime.datetime.strptime(doc["published"], "%Y-%m-%dT%H:%M:%SZ").strftime("%Y/%m/%d")  # Formatage de la date en année/mois/jour avec librairie datetime
+            auteurs = [author['name'] for author in entry['author']]
+        except TypeError:
+            auteurs = [entry['author']['name']]
+        texte = entry.get('summary', '').replace('\n', '')
+        date = datetime.datetime.strptime(entry['published'], "%Y-%m-%dT%H:%M:%SZ").strftime("%Y/%m/%d")
+        url = entry['id']
+        docs.append({
+            "type": "ArXiv",
+            "titre": titre,
+            "auteur": auteurs[0],
+            "date": date,
+            "url": url,
+            "texte": texte,
+            "co_auteurs": ", ".join(auteurs[1:]) if len(auteurs) > 1 else ""
+        })
+    return docs
 
-        doc_classe = Document(titre, authors, date, doc["id"], summary)  # Création du Document
-        collection.append(doc_classe)  # Ajout du Document à la liste.
+# Fonction pour collecter les données Reddit
+def collect_reddit_data(subreddit, limit=10):
+    reddit = praw.Reddit(client_id="your_client_id",
+                         client_secret="your_client_secret",
+                         user_agent="your_user_agent")
+    hot_posts = reddit.subreddit(subreddit).hot(limit=limit)
+    docs = []
+    for post in hot_posts:
+        if post.selftext:
+            docs.append({
+                "type": "Reddit",
+                "titre": post.title,
+                "auteur": str(post.author),
+                "date": datetime.datetime.fromtimestamp(post.created).strftime("%Y/%m/%d"),
+                "url": "https://www.reddit.com" + post.permalink,
+                "texte": post.selftext.replace('\n', ''),
+                "nb_comments": post.num_comments
+            })
+    return docs
 
-    elif nature == "Reddit":
-        #print("".join([f"{k}: {v}\n" for k, v in doc.__dict__.items()]))
-        titre = doc.title.replace("\n", '')
-        auteur = str(doc.author)
-        date = datetime.datetime.fromtimestamp(doc.created).strftime("%Y/%m/%d")
-        url = "https://www.reddit.com/"+doc.permalink
-        texte = doc.selftext.replace("\n", "")
+# Sauvegarde des données dans un fichier CSV
+def save_data_to_csv(data, filename):
+    df = pd.DataFrame(data)
+    df.to_csv(filename, index=False)
+    print(f"Données sauvegardées dans {filename}")
 
-        doc_classe = Document(titre, auteur, date, url, texte)
+# Chargement des données depuis un fichier CSV
+def load_data_from_csv(filename):
+    return pd.read_csv(filename)
 
-        collection.append(doc_classe)
+# Main
+if __name__ == "__main__":
+    data_file = "corpus_data.csv"
 
-# Création de l'index de documents
-id2doc = {}
-for i, doc in enumerate(collection):
-    id2doc[i] = doc.titre
+    if os.path.exists(data_file):
+        print("Chargement des données depuis le fichier existant...")
+        data = load_data_from_csv(data_file)
+    else:
+        print("Aucun fichier trouvé. Collecte des données...")
+        reddit_data = collect_reddit_data('travel', limit=10)
+        arxiv_data = collect_arxiv_data('climate', limit=10)
+        data = reddit_data + arxiv_data
+        save_data_to_csv(data, data_file)
 
-# =============== 2.4, 2.5 : CLASSE AUTEURS ===============
-from Classes import Author
-
-# =============== 2.6 : DICT AUTEURS ===============
-authors = {}
-aut2id = {}
-num_auteurs_vus = 0
-
-# Création de la liste+index des Auteurs
-for doc in collection:
-    if doc.auteur not in aut2id:
-        num_auteurs_vus += 1
-        authors[num_auteurs_vus] = Author(doc.auteur)
-        aut2id[doc.auteur] = num_auteurs_vus
-
-    authors[aut2id[doc.auteur]].add(doc.texte)
-
-
-# =============== 2.7, 2.8 : CORPUS ===============
-from Corpus import Corpus
-corpus = Corpus("Mon corpus")
-
-# Construction du corpus à partir des documents
-for doc in collection:
-    corpus.add(doc)
-#corpus.show(tri="abc")
-#print(repr(corpus))
-
-
-# =============== 2.9 : SAUVEGARDE ===============
-import pickle
-
-# Ouverture d'un fichier, puis écriture avec pickle
-with open("corpus.pkl", "wb") as f:
-    pickle.dump(corpus, f)
-
-# Supression de la variable "corpus"
-del corpus
-
-# Ouverture du fichier, puis lecture avec pickle
-with open("corpus.pkl", "rb") as f:
-    corpus = pickle.load(f)
-
-# La variable est réapparue
-print(corpus)
-
-
-
-
-
-
-
-
+    # Affichage des données chargées
+    print(f"Données chargées : {len(data)} documents")
+    print(pd.DataFrame(data).head())  # Affiche les premiers documents pour vérification
