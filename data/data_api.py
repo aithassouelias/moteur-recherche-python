@@ -1,10 +1,21 @@
+"""
+Ce module regroupe les différentes fonctions permettant de récupérer les données depuis l'API Wikivoyage et les stocker dans un fichier JSON.
+"""
 import requests
 import mwparserfromhell
 import json
 import os
 
 # Fonction pour récupérer l'index des sections et les afficher
-def get_section_indices(city_name, section_name):
+def get_section_indices(city_name:str, section_name:str)->str:
+    """
+    Cette fonction permet de récupérer l'index de la section que l'on souhaite récupérer sur la page Wikivoyage
+
+    :param city_name: Nom de la ville recherchée.
+    :param section_name: Nom de la section recherchée.
+
+    :return: Retourne l'index de la section recherchée.
+    """
     API_URL = "https://en.wikivoyage.org/w/api.php"
     params_sections = {
         "action": "parse",
@@ -29,7 +40,15 @@ def get_section_indices(city_name, section_name):
         return None
 
 # Fonction pour récupérer le contenu d'une section
-def get_section_content(city_name, section_index):
+def get_section_content(city_name:str, section_index:int)-> str:
+    """
+    Cette fonction permet de récupérer les données textuelles depuis l'API wikivoyage pour une ville et section spécifique
+
+    :param city_name: Nom de la ville à rechercher.
+    :param section_index: Index de la section à récupérer.
+
+    :return: Retourne le contenu de la section recherchée.
+    """
     API_URL = "https://en.wikivoyage.org/w/api.php"
     params_content = {
         "action": "parse",
@@ -56,7 +75,13 @@ def get_section_content(city_name, section_index):
         return None
 
 # Fonction pour sauvegarder les données dans data.json
-def save_to_json(city_name, section_content):
+def save_to_json(city_name:str, section_content:str):
+    """
+    Cette fonction permet d'enregistrer les données récoltées pour une ville spécifique dans un fichier JSON.
+
+    :param city_name: Nom de la ville à rechercher.
+    :param section_content: Section à enregistrer.
+    """
     file_name = "data.json"
     
     # Charger les données existantes si le fichier existe
@@ -76,6 +101,9 @@ def save_to_json(city_name, section_content):
 
 # Script principal pour parcourir une liste de villes
 def main():
+    """
+    Cette fonction permet de créer le fichier json final à partir d'une liste de villes et de la section que l'on souhaite récupérer.
+    """
     # Liste des villes
     cities = [
         "Tokyo", "New York", "Paris", "London", "Shanghai", "Dubai", "Mumbai", "Istanbul", "Beijing", "Los Angeles",
