@@ -1,16 +1,18 @@
 from models.Corpus import Corpus
 
+# Chargement des données
 corpus = Corpus()
-corpus.load_from_file('./data/data.json')
+corpus.load_from_file('./data/data_cleaned.json')
 
-
+# Affichage des statistiques du corpus
 print(corpus.get_corpus_info())
 
-keyword = "walk"
-matches = corpus.search(keyword)
 
-# Affichage des résultats
-for city, count in matches:
-    print(f"Ville: {city}, Nombre d'occurrences du mot {keyword} : {count}")
+texts = corpus.prepare_texts()
+corpus.calculate_tf(texts)
+corpus.calculate_idf(texts)
+corpus.calculate_tfidf()
 
-corpus.display_tfidf_matrix()
+# Visualiser la matrice TF-IDF
+tfidf_df = corpus.get_tfidf_matrix()
+print(tfidf_df)

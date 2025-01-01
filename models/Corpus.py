@@ -1,11 +1,13 @@
 """
 Ce module contient la classe Corpus qui permet de stocker et intéragir avec les données textuelles récoltées.
 """
+import math
 import pandas as pd
 import json
 import re
+import numpy as np
 from .Classes import Author
-from collections import Counter
+from collections import Counter, defaultdict
 
 class Corpus:
     """
@@ -67,31 +69,6 @@ class Corpus:
         print(f"\nLes 10 mots les plus fréquents dans le corpus :")
         for word, count in most_common_words:
             print(f"{word}: {count}")
-    
-
-    def add(self, doc):
-        if doc.auteur not in self.aut2id:
-            self.naut += 1
-            self.authors[self.naut] = Author(doc.auteur)
-            self.aut2id[doc.auteur] = self.naut
-        self.authors[self.aut2id[doc.auteur]].add(doc.texte)
-
-        self.ndoc += 1
-        self.id2doc[self.ndoc] = doc
-
-    def show(self, n_docs=-1, tri="abc"):
-        docs = list(self.id2doc.values())
-        if tri == "abc":  # Tri alphabétique
-            docs = list(sorted(docs, key=lambda x: x.titre.lower()))[:n_docs]
-        elif tri == "123":  # Tri temporel
-            docs = list(sorted(docs, key=lambda x: x.date))[:n_docs]
-
-        print("\n".join(list(map(repr, docs))))
-
-    def __repr__(self):
-        docs = list(self.id2doc.values())
-        docs = list(sorted(docs, key=lambda x: x.titre.lower()))
-        return "\n".join(list(map(str, docs)))
 
     def search(self, keyword):
         """
@@ -115,6 +92,85 @@ class Corpus:
                     print("Ce mot n'est pas contenu dans ce Corpus.")
         
         return matches
+    
+    def clean_text_to_english(self, text):
+        """
+        Filtre le texte pour ne garder que les caractères anglais (lettres et ponctuation).
+        
+        :param text: Le texte à filtrer.
+        :return: Le texte nettoyé, contenant uniquement des caractères anglais et des espaces.
+        """
+        # Filtrer le texte pour ne conserver que les caractères de l'alphabet anglais et les espaces.
+        cleaned_text = re.sub(r'[^a-zA-Z0-9\s.,!?;\'"-]', '', text)
+        
+        # Supprimer les caractères non-latin (par exemple, le cyrillique, les caractères asiatiques)
+        cleaned_text = re.sub(r'[^\x00-\x7F]+', '', cleaned_text)
+
+        return cleaned_text
+    
+    def prepare_texts(self):
+        """
+        Concatène toutes les sections 'do' pour chaque ville et prépare les textes.
+        """
+        texts = []
+        self.city_names = []
+        for city, details in self.data.items():
+            if "do" in details:
+                texts.append(details["do"])
+                self.city_names.append(city)
+        return texts
+
+    def calculate_tf(self, texts):
+        """
+        Calcule la matrice TF (Term Frequency).
+        """
+        self.vocabulary = sorted(set(word for text in texts for word in re.findall(r'\b\w+\b', text.lower())))
+        tf_matrix = []
+
+        for text in texts:
+            # Nettoyer le texte pour ne conserver que l'anglais
+            text = self.clean_text_to_english(text)
+            
+            word_counts = Counter(re.findall(r'\b\w+\b', text.lower()))
+            total_words = sum(word_counts.values())
+            tf_vector = [word_counts[word] / total_words for word in self.vocabulary]
+            tf_matrix.append(tf_vector)
+
+        self.tf_matrix = np.array(tf_matrix)
+
+    def calculate_idf(self, texts):
+        """
+        Calcule le vecteur IDF (Inverse Document Frequency).
+        """
+        num_documents = len(texts)
+        doc_frequency = defaultdict(int)
+
+        for word in self.vocabulary:
+            for text in texts:
+                if word in text.lower():
+                    doc_frequency[word] += 1
+
+        self.idf_vector = np.array([
+            math.log((num_documents / (doc_frequency[word] + 1))) for word in self.vocabulary
+        ])
+
+    def calculate_tfidf(self):
+        """
+        Calcule la matrice TF-IDF à partir des matrices TF et IDF.
+        """
+        self.tfidf_matrix = self.tf_matrix * self.idf_vector
+
+    def get_tfidf_matrix(self):
+        """
+        Renvoie la matrice TF-IDF sous forme de DataFrame pour une visualisation.
+        """
+        if self.tfidf_matrix is None:
+            raise ValueError("La matrice TF-IDF n'a pas encore été calculée.")
+        return pd.DataFrame(
+            self.tfidf_matrix,
+            index=self.city_names,
+            columns=self.vocabulary
+        )
 
     def concorde(self, keyword, window=30):
         results = []
