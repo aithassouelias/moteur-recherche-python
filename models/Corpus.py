@@ -6,7 +6,6 @@ import pandas as pd
 import json
 import re
 import numpy as np
-from .Classes import Author
 from collections import Counter, defaultdict
 
 class Corpus:
@@ -15,17 +14,20 @@ class Corpus:
     """
     def __init__(self):
         self.data = {}
+        self.cleaned_data = {}
         self.concatenated_text = None  # Pour éviter de recalculer lors de chaque recherche
 
-    def load_from_file(self, file_path):
+    def load_from_files(self, data_file_path, cleaned_file_path):
         """
-        Cette méthode permet de charger les données contenues dans le fichier JSON créé depuis l'api Wikivoyage.
-
-        :param file_path: Chemin vers le fichier JSON.
+        Charge les données à partir de deux fichiers : un fichier complet et un fichier nettoyé.
         """
-        
-        with open(file_path, 'r', encoding='utf-8') as file:
+        # Charger le fichier data.json (données complètes)
+        with open(data_file_path, 'r', encoding='utf-8') as file:
             self.data = json.load(file)
+        
+        # Charger le fichier data_cleaned.json (données nettoyées)
+        with open(cleaned_file_path, 'r', encoding='utf-8') as file:
+            self.cleaned_data = json.load(file)
 
     def get_city_activities(self, city_name):
         """
