@@ -3,7 +3,7 @@ import tkinter as tk
 
 # Chargement des données
 corpus = Corpus()
-corpus.load_from_file('./data/data_cleaned.json')
+corpus.load_from_files('./data/data.json','./data/data_cleaned.json')
 
 # Fonctionnalités de l'interface
 class SearchInterface:
