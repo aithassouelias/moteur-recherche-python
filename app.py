@@ -1,7 +1,3 @@
-"""
-Fichier temporaire
-"""
-
 from models.Corpus import Corpus
 from models.SearchEngine import SearchEngine
 
