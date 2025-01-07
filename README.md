@@ -46,7 +46,7 @@ Ce projet a pour objectif de développer un moteur de recherche textuel sur des 
 La documentation  a été générée automatiquement à l'aide de docstring et sphynx. Elle se trouve dans le dossier `/docs` Pour y accéder :
 
 - Clonez le projet en local.
-- Ouvrez le fichier `index.html` situé dans le dossier `server/docs/_build/html` avec votre navigateur.
+- Ouvrez le fichier `index.html` situé dans le dossier `/docs/_build/html` avec votre navigateur.
 - Consultez les instructions détaillées pour l'ensemble des méthodes développées.
 
 ## Contributions
