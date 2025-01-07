@@ -15,7 +15,7 @@ class Corpus:
     def __init__(self):
         self.data = {}
         self.cleaned_data = {}
-        self.concatenated_text = None  # Pour éviter de recalculer lors de chaque recherche
+        self.concatenated_text = None
 
     def load_from_files(self, data_file_path, cleaned_file_path):
         """
@@ -61,12 +61,13 @@ class Corpus:
         # Compter les mots dans toutes les sections "do"
         word_counter = Counter()
         for details in self.data.values():
-            # On nettoie le texte en supprimant la ponctuation et en mettant tout en minuscule
+            # Nettoyage du texte en supprimant la ponctuation et en mettant tout en minuscule
             words = re.findall(r'\b\w+\b', details['do'].lower())
             word_counter.update(words)
         
         # Obtenir les 10 mots les plus fréquents
         most_common_words = word_counter.most_common(10)
+
         # Affichage des 10 mots les plus fréquents
         print(f"\nLes 10 mots les plus fréquents dans le corpus :")
         for word, count in most_common_words:
@@ -76,18 +77,17 @@ class Corpus:
         """
         Cette méthode permet de rechercher un mot clé dans le corpus et renvoie son occurrence par ville.
         """
-        # Initialiser une liste pour stocker les résultats des villes et des sections "do"
+        # Initialisation d'une liste pour stocker les résultats des villes et des sections "do"
         matches = []
         
         # Recherche du mot-clé dans chaque section "do" des villes
         for city, details in self.data.items():
-            # Si la ville a une section "do", on effectue la recherche
             if "do" in details:
-                # Utilisation de re pour trouver les occurrences du mot-clé dans la section "do"
+                # Utilisation d'expression régulière pour trouver les occurrences du mot-clé dans la section "do"
                 pattern = re.compile(rf'\b{re.escape(keyword)}\b', re.IGNORECASE)
                 city_matches = pattern.findall(details['do'])
                 
-                # Si le mot-clé est trouvé, on enregistre la ville et le nombre de correspondances
+                # Mot-clé est trouvé, on enregistre la ville et le nombre de correspondances
                 if city_matches:
                     matches.append((city, len(city_matches)))
                 else :
@@ -97,22 +97,22 @@ class Corpus:
     
     def clean_text_to_english(self, text):
         """
-        Filtre le texte pour ne garder que les caractères anglais (lettres et ponctuation).
+        Cette méthode filtre le texte pour ne garder que les caractères anglais (lettres et ponctuation).
         
         :param text: Le texte à filtrer.
         :return: Le texte nettoyé, contenant uniquement des caractères anglais et des espaces.
         """
-        # Filtrer le texte pour ne conserver que les caractères de l'alphabet anglais et les espaces.
+        # Nettoyage du texte
         cleaned_text = re.sub(r'[^a-zA-Z0-9\s.,!?;\'"-]', '', text)
         
-        # Supprimer les caractères non-latin (par exemple, le cyrillique, les caractères asiatiques)
+        # Suppression des caractères non-latin
         cleaned_text = re.sub(r'[^\x00-\x7F]+', '', cleaned_text)
 
         return cleaned_text
     
     def prepare_texts(self):
         """
-        Concatène toutes les sections 'do' pour chaque ville et prépare les textes.
+        Cette méthode concatène toutes les sections 'do' pour chaque ville et prépare les textes.
         """
         texts = []
         self.city_names = []
@@ -124,13 +124,13 @@ class Corpus:
 
     def calculate_tf(self, texts):
         """
-        Calcule la matrice TF (Term Frequency).
+        Cette méthode calcule la matrice TF.
         """
         self.vocabulary = sorted(set(word for text in texts for word in re.findall(r'\b\w+\b', text.lower())))
         tf_matrix = []
 
         for text in texts:
-            # Nettoyer le texte pour ne conserver que l'anglais
+            # Nettoyage du texte 
             text = self.clean_text_to_english(text)
             
             word_counts = Counter(re.findall(r'\b\w+\b', text.lower()))
@@ -142,7 +142,7 @@ class Corpus:
 
     def calculate_idf(self, texts):
         """
-        Calcule le vecteur IDF (Inverse Document Frequency).
+        Cette méthode calcule le vecteur IDF.
         """
         num_documents = len(texts)
         doc_frequency = defaultdict(int)
@@ -158,13 +158,13 @@ class Corpus:
 
     def calculate_tfidf(self):
         """
-        Calcule la matrice TF-IDF à partir des matrices TF et IDF.
+        Cette méthode calcule la matrice TF-IDF à partir des matrices TF et IDF.
         """
         self.tfidf_matrix = self.tf_matrix * self.idf_vector
 
     def get_tfidf_matrix(self):
         """
-        Renvoie la matrice TF-IDF sous forme de DataFrame pour une visualisation.
+        Cette méthode renvoie la matrice TF-IDF sous forme de DataFrame pour une visualisation.
         """
         if self.tfidf_matrix is None:
             raise ValueError("La matrice TF-IDF n'a pas encore été calculée.")
@@ -173,16 +173,3 @@ class Corpus:
             index=self.city_names,
             columns=self.vocabulary
         )
-
-    def concorde(self, keyword, window=30):
-        results = []
-        for doc in self.id2doc.values():
-            for match in re.finditer(rf'\b{re.escape(keyword)}\b', doc.texte, re.IGNORECASE):
-                start = max(match.start() - window, 0)
-                end = min(match.end() + window, len(doc.texte))
-                results.append({
-                    "Contexte gauche": doc.texte[start:match.start()],
-                    "Motif trouvé": match.group(),
-                    "Contexte droit": doc.texte[match.end():end],
-                })
-        return pd.DataFrame(results)

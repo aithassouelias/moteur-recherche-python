@@ -74,7 +74,6 @@ def get_section_content(city_name:str, section_index:int)-> str:
         print(f"Erreur : {response_content.status_code}")
         return None
 
-# Fonction pour sauvegarder les données dans data.json
 def save_to_json(city_name:str, section_content:str):
     """
     Cette fonction permet d'enregistrer les données récoltées pour une ville spécifique dans un fichier JSON.
@@ -138,6 +137,7 @@ def main():
                 print(f"Aucun contenu trouvé pour la section '{section_to_find.capitalize()}' de {city_name}.")
         else:
             print(f"Section '{section_to_find.capitalize()}' introuvable pour la ville : {city_name}.")
+
 
 # Exécution du script
 if __name__ == "__main__":

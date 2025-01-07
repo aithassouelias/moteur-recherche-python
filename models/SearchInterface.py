@@ -1,7 +1,16 @@
+"""
+Ce module contient la classe SearchInterface qui permet créer l'interface graphique Tkinter et effectuer une recherche.
+"""
 import tkinter as tk
 
 class SearchInterface:
+    """
+    Cette classe inclut 2 méthodes permettant de créer l'interface graphique Tkinter et permettre à l'utilisateur de réaliser une recherche.
+    """
     def __init__(self, root, search_engine):
+        """
+        Cette méthode permet de créer l'interface graphique Tkinter
+        """
         self.root = root
         self.search_engine = search_engine
 
@@ -36,6 +45,9 @@ class SearchInterface:
         self.result_box.pack(pady=5)
 
     def perform_search(self):
+        """
+        Cette méthode permet de réaliser une recherche en appelant la méthode search de la classe SearchEngine
+        """
         # Récupération de la requête utilisateur
         query = self.search_entry.get()
 

@@ -7,10 +7,15 @@ from collections import Counter
 import re
 
 class SearchEngine:
+    """
+    Cette classe regroupe les différentes méthodes permettant de réaliser une recherche et trouver les documents les plus pertinents.
+    """
     def __init__(self, corpus):
         """
-        Initialisation du moteur de recherche avec un objet Corpus.
+        Cette méthode permet d'initialiser le moteur de recherche avec un objet Corpus.
         Lors de l'initialisation, nous calculons la matrice TF-IDF.
+
+        :param corpus: Objet de la classe Corpus
         """
         self.corpus = corpus
         # Charger et préparer les textes
@@ -23,8 +28,12 @@ class SearchEngine:
 
     def transform_query_to_vector(self, query):
         """
-        Transforme une requête sous forme de texte en un vecteur de termes
+        Cette méthode transforme une requête textuelle en un vecteur de termes
         en fonction du vocabulaire du corpus.
+
+        :param query: Requête textuelle
+
+        :return: Requête sous forme de vecteur
         """
         # Nettoyer et séparer les mots de la requête
         query_words = re.findall(r'\b\w+\b', query.lower())
@@ -41,7 +50,12 @@ class SearchEngine:
 
     def calculate_cosine_similarity(self, query_vector, doc_vector):
         """
-        Calcule la similarité cosinus entre la requête et un vecteur de document.
+        Cette méthode calcule la similarité cosinus entre la requête et un vecteur de document.
+
+        :param query_vector: La requête sous forme de vecteur
+        :param doc_vector: Le document sous forme de vecteur
+
+        :return: Le coefficient de similarité.
         """
         dot_product = np.dot(query_vector, doc_vector)
         norm_query = np.linalg.norm(query_vector)
@@ -54,7 +68,7 @@ class SearchEngine:
 
     def search(self, query, top_n=5):
         """
-        Recherche les documents les plus pertinents en fonction de la requête.
+        Cette méthode recherche les documents les plus pertinents en fonction de la requête.
         
         :param query: La requête sous forme de texte.
         :param top_n: Le nombre de résultats à retourner (par défaut 5).
