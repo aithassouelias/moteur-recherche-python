@@ -1,3 +1,6 @@
+"""
+Ce module contient la classe SearchEngine qui permet de réaliser la recherche par mots-clés.
+"""
 import numpy as np
 import pandas as pd
 from collections import Counter

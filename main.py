@@ -1,3 +1,7 @@
+"""
+Ce fichier est le point d'entrée de l'application. L'exécution de celui-ci permet d'afficher l'interface graphique
+et intéragir avec les données textuelles.
+"""
 from models.Corpus import Corpus
 import tkinter as tk
 
@@ -5,7 +9,7 @@ import tkinter as tk
 corpus = Corpus()
 corpus.load_from_files('./data/data.json','./data/data_cleaned.json')
 
-# Fonctionnalités de l'interface
+# Création de l'interface
 class SearchInterface:
     def __init__(self, root, corpus):
         self.root = root
