@@ -19,11 +19,13 @@ Ce projet a pour objectif de développer un moteur de recherche textuel sur des 
    ```bash
    git clone https://github.com/votre-utilisateur/moteur-recherche-touristique.git
 
-2. Installez les dépendances :  
-pip install -r requirements.txt
+2. Installez les dépendances : 
+    ```bash 
+    pip install -r requirements.txt
 
-3. Lancez le projet :  
-python main.py
+3. Lancez le projet :
+    ```bash  
+    python main.py
 
 ## Utilisation
 1. Entrez un mot-clé correspondant à une activité touristique (par ex. "randonnée").  
@@ -39,7 +41,6 @@ python main.py
 - `main.py` : Point d’entrée du programme.
 - `data/` : Contient les données brutes collectées.
 - `models/` : Classes Python pour gérer les données.
-- `utils.py` : Fonctions utilitaires pour le traitement des données.
 
 ## Contributions
 Les contributions sont les bienvenues !  
@@ -47,8 +48,6 @@ Les contributions sont les bienvenues !
 2. Créez une branche pour vos modifications :  
    ```bash
    git checkout -b feature/ma-fonctionnalite
-
-
 ## Auteurs
 Développé par : 
 - [Timothy Marcia](https://github.com/TimothyMarcia)
