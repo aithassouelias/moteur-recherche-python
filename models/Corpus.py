@@ -32,12 +32,12 @@ class Corpus:
     def get_city_activities(self, city_name):
         """
         Cette méthode permet de récupérer les activités chargées pour une ville spécifique.
-
-        :param city_name: Nom de la ville à rechercher dans les données
         """
-        city_info = self.data.get(city_name, "City not found in the data.")
-        activities = city_info.get("do", "City non")
-        return activities
+        city_info = self.data.get(city_name)
+        if city_info is None:
+            return "City not found in the data."
+        return city_info.get("do", "No activities found.")
+
     
     def get_corpus_info(self):
         """
